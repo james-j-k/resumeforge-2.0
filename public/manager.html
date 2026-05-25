@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResumeForge — HR Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0d0d0d; --surface:#161616; --surface2:#1e1e1e; --border:#2a2a2a; --accent:#e8ff47; --accent2:#ff6b35; --text:#f0f0f0; --muted:#666; --muted2:#3a3a3a; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:'DM Mono',monospace; min-height:100vh; display:flex; flex-direction:column; }
+
+header { display:flex; align-items:center; gap:16px; padding:14px 28px; border-bottom:1px solid var(--border); background:var(--bg); position:sticky; top:0; z-index:100; }
+.logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem; margin-right:8px; }
+.logo span { color:var(--accent); }
+.header-badge { background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:3px 9px; font-size:0.64rem; color:var(--muted); }
+.header-right { margin-left:auto; display:flex; align-items:center; gap:12px; }
+.header-user { font-size:0.7rem; color:var(--muted); }
+.header-user strong { color:var(--text); }
+.btn-sm { padding:6px 13px; border-radius:5px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'DM Mono',monospace; font-size:0.7rem; cursor:pointer; transition:all 0.2s; }
+.btn-sm:hover { border-color:var(--accent); color:var(--accent); }
+
+.layout { display:grid; grid-template-columns:340px 1fr; flex:1; min-height:0; height:calc(100vh - 53px); }
+
+/* LEFT */
+.left { border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.left-head { padding:16px 18px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.search-row { display:flex; gap:8px; margin-bottom:10px; }
+.search-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:'DM Mono',monospace; font-size:0.8rem; padding:8px 12px; outline:none; transition:border-color 0.2s; }
+.search-input:focus { border-color:var(--accent); }
+.btn-add { padding:8px 13px; background:var(--accent); color:#000; border:none; border-radius:6px; font-family:'DM Mono',monospace; font-size:0.75rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:all 0.2s; }
+.btn-add:hover { background:#d4eb30; }
+.stats-row { display:flex; gap:8px; }
+.stat-chip { background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:4px 10px; font-size:0.65rem; color:var(--muted); }
+.stat-chip strong { color:var(--accent); }
+
+.emp-list { flex:1; overflow-y:auto; padding:10px; }
+.emp-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:7px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:12px; }
+.emp-card:hover { border-color:#444; background:var(--surface2); }
+.emp-card.active { border-color:var(--accent); background:rgba(232,255,71,0.04); }
+.emp-avatar { width:38px; height:38px; border-radius:50%; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:0.85rem; color:var(--accent); flex-shrink:0; }
+.emp-info { flex:1; min-width:0; }
+.emp-name { font-family:'Syne',sans-serif; font-size:0.88rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.emp-title { font-size:0.68rem; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.emp-skills { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+.skill-chip { background:var(--surface2); border:1px solid var(--border); border-radius:3px; padding:2px 6px; font-size:0.6rem; color:var(--muted); }
+.empty-list { padding:40px 20px; text-align:center; color:var(--muted); font-size:0.76rem; line-height:1.7; }
+
+/* RIGHT */
+.right { overflow-y:auto; display:flex; flex-direction:column; }
+.right-empty { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; color:var(--muted); font-size:0.78rem; text-align:center; }
+
+.detail { padding:28px 32px; flex:1; }
+.detail-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+.detail-name { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; }
+.detail-title { font-size:0.85rem; color:var(--muted); margin-top:3px; }
+.detail-contact { font-size:0.7rem; color:var(--muted); margin-top:6px; }
+.detail-actions { display:flex; gap:8px; flex-shrink:0; }
+
+.section-label { font-size:0.62rem; letter-spacing:2px; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); padding-bottom:6px; margin-bottom:12px; margin-top:22px; }
+
+.exp-item { margin-bottom:14px; padding:12px 14px; background:var(--surface); border:1px solid var(--border); border-radius:7px; }
+.exp-title { font-family:'Syne',sans-serif; font-size:0.88rem; font-weight:600; }
+.exp-meta { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+.exp-desc { font-size:0.76rem; color:#aaa; margin-top:6px; line-height:1.55; }
+
+.skills-wrap { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+.skill-tag { background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:4px 10px; font-size:0.72rem; }
+
+.gen-panel { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; margin-top:22px; }
+.gen-panel-title { font-family:'Syne',sans-serif; font-size:0.9rem; font-weight:700; margin-bottom:4px; }
+.gen-panel-sub { font-size:0.7rem; color:var(--muted); margin-bottom:14px; }
+textarea { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:'DM Mono',monospace; font-size:0.8rem; padding:10px 13px; outline:none; resize:vertical; transition:border-color 0.2s; }
+textarea:focus { border-color:var(--accent); }
+.gen-btns { display:flex; gap:8px; margin-top:12px; }
+.btn-gen { flex:1; padding:12px; background:var(--accent); color:#000; font-family:'Syne',sans-serif; font-size:0.88rem; font-weight:700; border:none; border-radius:7px; cursor:pointer; transition:all 0.2s; }
+.btn-gen:hover { background:#d4eb30; transform:translateY(-1px); }
+.btn-gen:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.btn-quick { flex:1; padding:12px; background:transparent; color:var(--muted); font-family:'DM Mono',monospace; font-size:0.8rem; border:1px solid var(--border); border-radius:7px; cursor:pointer; transition:all 0.2s; }
+.btn-quick:hover { border-color:var(--text); color:var(--text); }
+
+/* Resume preview inside right panel */
+.resume-wrap { margin-top:24px; }
+.resume-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.resume-toolbar-title { font-size:0.68rem; color:var(--muted); }
+.toolbar-btns { display:flex; gap:6px; }
+.t-btn { padding:5px 11px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'DM Mono',monospace; font-size:0.68rem; border-radius:5px; cursor:pointer; transition:all 0.2s; }
+.t-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+.resume-doc { background:#fff; color:#1a1a1a; border-radius:6px; padding:40px 48px; font-family:'Calibri','Gill Sans MT',Arial,sans-serif; line-height:1.55; font-size:0.9rem; box-shadow:0 20px 60px rgba(0,0,0,0.4); }
+.r-name { font-family:'Calibri',Arial,sans-serif; font-size:1.9rem; font-weight:700; color:#111; margin-bottom:3px; }
+.r-title-line { font-size:0.94rem; color:#555; font-style:italic; margin-bottom:8px; }
+.r-contact { font-size:0.78rem; color:#555; }
+.r-divider { border:none; border-top:2px solid #1a1a1a; margin:14px 0 0; }
+.r-section { margin-top:18px; }
+.r-section-title { font-size:0.7rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#111; border-bottom:1px solid #ccc; padding-bottom:5px; margin-bottom:10px; }
+.r-summary { font-size:0.9rem; color:#333; line-height:1.7; }
+.r-entry { margin-bottom:13px; }
+.r-entry-header { display:flex; justify-content:space-between; align-items:baseline; }
+.r-entry-title { font-weight:700; font-size:0.92rem; color:#111; }
+.r-entry-date { font-size:0.78rem; color:#666; }
+.r-entry-sub { font-size:0.84rem; color:#555; font-style:italic; margin-bottom:6px; }
+.r-bullets { list-style:none; padding:0; margin:0; }
+.r-bullets li { font-size:0.9rem; margin-bottom:4px; line-height:1.5; color:#222; padding-left:14px; position:relative; }
+.r-bullets li::before { content:'–'; position:absolute; left:0; color:#999; }
+.r-skills-grid { display:flex; flex-direction:column; gap:4px; }
+.r-skill-row { font-size:0.9rem; color:#222; }
+.r-skill-cat { font-weight:700; }
+
+/* Modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:999; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:28px 32px; width:100%; max-width:400px; }
+.modal-title { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700; margin-bottom:18px; }
+.modal label { display:block; font-size:0.63rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-top:12px; margin-bottom:5px; }
+.modal input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:'DM Mono',monospace; font-size:0.82rem; padding:9px 12px; outline:none; transition:border-color 0.2s; }
+.modal input:focus { border-color:var(--accent); }
+.modal-btns { display:flex; gap:8px; margin-top:18px; }
+.btn-primary { flex:1; padding:11px; background:var(--accent); color:#000; font-family:'Syne',sans-serif; font-size:0.88rem; font-weight:700; border:none; border-radius:7px; cursor:pointer; transition:all 0.2s; }
+.btn-primary:hover { background:#d4eb30; }
+.btn-ghost { padding:11px 18px; background:transparent; border:1px solid var(--border); color:var(--muted); font-family:'DM Mono',monospace; font-size:0.78rem; border-radius:7px; cursor:pointer; }
+.modal-err { color:#ff6666; font-size:0.7rem; margin-top:8px; display:none; }
+
+@media print {
+  header, .left, .detail-head, .gen-panel, .resume-toolbar, .detail-actions { display:none !important; }
+  .layout { display:block !important; }
+  .right { overflow:visible !important; }
+  .resume-doc { box-shadow:none !important; padding:18px 22px !important; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Resume<span>Forge</span></div>
+  <div class="header-badge">HR Dashboard</div>
+  <div class="header-right">
+    <span class="header-user">Logged in as <strong id="hdr-name"></strong></span>
+    <button class="btn-sm" onclick="logout()">↪ Logout</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- LEFT: employee list -->
+  <div class="left">
+    <div class="left-head">
+      <div class="search-row">
+        <input class="search-input" id="search" placeholder="Search by name or skill…" oninput="onSearch()" />
+        <button class="btn-add" onclick="openAddModal()">+ Add</button>
+      </div>
+      <div class="stats-row">
+        <div class="stat-chip"><strong id="stat-count">0</strong> employees</div>
+        <div class="stat-chip" id="stat-skills-chip" style="display:none"><strong id="stat-skills">0</strong> unique skills</div>
+      </div>
+    </div>
+    <div class="emp-list" id="emp-list">
+      <div class="empty-list">Loading employees…</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: detail + generate -->
+  <div class="right" id="right-panel">
+    <div class="right-empty" id="right-empty">
+      <div style="font-size:2.5rem">👥</div>
+      <div style="font-size:0.9rem;color:var(--text)">Select an employee</div>
+      <div>to view their profile and generate a resume</div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Employee Modal -->
+<div class="modal-overlay" id="add-modal" style="display:none" onclick="if(event.target===this)closeAddModal()">
+  <div class="modal">
+    <div class="modal-title">Add Employee</div>
+    <label>Full Name</label><input id="m-name" placeholder="Arjun Sharma">
+    <label>Username</label><input id="m-user" placeholder="arjun.sharma">
+    <label>Email</label><input id="m-email" type="email" placeholder="arjun@company.com">
+    <label>Password</label><input id="m-pass" type="password" placeholder="Temporary password">
+    <div class="modal-err" id="modal-err"></div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="doAddEmployee()">Create Account</button>
+      <button class="btn-ghost" onclick="closeAddModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOKEN = () => localStorage.getItem('rf_token');
+const esc   = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+let allEmployees = [];
+let selectedEmp  = null;
+let lastResume   = null;
+let currentProvider = 'anthropic';
+
+// ── AUTH ──────────────────────────────────────────────────────
+async function checkAuth() {
+  const token = TOKEN();
+  if (!token) { window.location.href = '/login.html'; return false; }
+  try {
+    const r = await fetch('/api/auth/me', { headers:{ 'Authorization':'Bearer '+token } });
+    if (!r.ok) { logout(); return false; }
+    const u = await r.json();
+    if (u.role !== 'manager') { window.location.href = '/'; return false; }
+    document.getElementById('hdr-name').textContent = u.name;
+    return true;
+  } catch(e) { logout(); return false; }
+}
+
+function logout() {
+  localStorage.removeItem('rf_token'); localStorage.removeItem('rf_user');
+  window.location.href = '/login.html';
+}
+
+// ── EMPLOYEES ─────────────────────────────────────────────────
+async function loadEmployees(q) {
+  const url = '/api/employees' + (q ? '?q='+encodeURIComponent(q) : '');
+  const r = await fetch(url, { headers:{'Authorization':'Bearer '+TOKEN()} });
+  const list = await r.json();
+  allEmployees = list;
+  renderList(list);
+}
+
+function renderList(list) {
+  document.getElementById('stat-count').textContent = list.length;
+  const allSkills = new Set(list.flatMap(e => e.profile?.skills||[]));
+  document.getElementById('stat-skills').textContent = allSkills.size;
+  document.getElementById('stat-skills-chip').style.display = allSkills.size ? 'block' : 'none';
+
+  if (!list.length) {
+    document.getElementById('emp-list').innerHTML = `<div class="empty-list">No employees found.<br>Add one with the + button.</div>`;
+    return;
+  }
+  document.getElementById('emp-list').innerHTML = list.map(e => {
+    const initials = (e.name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const skills   = (e.profile?.skills||[]).slice(0,4);
+    const title    = e.profile?.title || 'No title set';
+    return `<div class="emp-card${selectedEmp?.id===e.id?' active':''}" onclick="selectEmployee('${e.id}')">
+      <div class="emp-avatar">${initials}</div>
+      <div class="emp-info">
+        <div class="emp-name">${esc(e.name)}</div>
+        <div class="emp-title">${esc(title)}</div>
+        ${skills.length ? `<div class="emp-skills">${skills.map(s=>`<div class="skill-chip">${esc(s)}</div>`).join('')}${(e.profile?.skills||[]).length>4?`<div class="skill-chip">+${(e.profile.skills.length-4)}</div>`:''}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let searchTimer;
+function onSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(() => loadEmployees(document.getElementById('search').value.trim()), 300); }
+
+async function selectEmployee(id) {
+  const emp = allEmployees.find(e => e.id === id);
+  if (!emp) return;
+  selectedEmp = emp;
+  lastResume  = null;
+  renderList(allEmployees);
+  renderDetail(emp);
+}
+
+function renderDetail(emp) {
+  const p = emp.profile || {};
+  const contact = [p.email||emp.email, p.phone, p.location, p.links].filter(Boolean).join(' · ');
+  const expHtml = (p.experience||[]).map(e => `
+    <div class="exp-item">
+      <div class="exp-title">${esc(e.title||'')} <span style="color:var(--muted);font-size:0.7rem;font-weight:400">${esc(e.company||'')}</span></div>
+      <div class="exp-meta">${esc(e.duration||'')}</div>
+      ${e.desc?`<div class="exp-desc">${esc(e.desc)}</div>`:''}
+    </div>`).join('') || '<div style="color:var(--muted);font-size:0.76rem">No experience added yet.</div>';
+
+  const skillsHtml = (p.skills||[]).length
+    ? (p.skills||[]).map(s=>`<div class="skill-tag">${esc(s)}</div>`).join('')
+    : '<span style="color:var(--muted);font-size:0.76rem">No skills added yet.</span>';
+
+  document.getElementById('right-panel').innerHTML = `
+    <div class="detail">
+      <div class="detail-head">
+        <div>
+          <div class="detail-name">${esc(emp.name)}</div>
+          <div class="detail-title">${esc(p.title||'No title set')}</div>
+          ${contact?`<div class="detail-contact">${esc(contact)}</div>`:''}
+        </div>
+        <div class="detail-actions">
+          <button class="btn-sm" style="color:#ff6666;border-color:#ff444430" onclick="deleteEmployee('${emp.id}')">✕ Remove</button>
+        </div>
+      </div>
+
+      <div class="section-label">Work Experience (${(p.experience||[]).length})</div>
+      ${expHtml}
+
+      <div class="section-label">Skills (${(p.skills||[]).length})</div>
+      <div class="skills-wrap">${skillsHtml}</div>
+
+      <div class="gen-panel">
+        <div class="gen-panel-title">Generate Resume</div>
+        <div class="gen-panel-sub">Optionally paste a job description to tailor for a specific role.</div>
+        <div style="margin-bottom:8px">
+          <select id="prov-sel" onchange="currentProvider=this.value" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;padding:8px 12px;outline:none">
+            <option value="anthropic">Claude (Anthropic)</option>
+            <option value="openai">OpenAI GPT-4o</option>
+            <option value="gemini">Gemini (Google)</option>
+            <option value="groq">Groq (Llama 3)</option>
+          </select>
+        </div>
+        <input id="gen-apikey" type="password" placeholder="API Key (stored in browser only)" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.8rem;padding:9px 13px;outline:none;margin-bottom:8px;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+        <textarea id="gen-jd" rows="4" placeholder="Paste job description here for tailored resume (optional)…"></textarea>
+        <div class="gen-btns">
+          <button class="btn-gen" onclick="generateFor('${emp.id}')">✦ Generate with AI</button>
+          <button class="btn-quick" onclick="quickGenerateFor('${emp.id}')">⚡ Quick</button>
+        </div>
+      </div>
+
+      <div id="resume-output-area"></div>
+    </div>`;
+
+  // Restore saved API key
+  const saved = localStorage.getItem('rf_apikey');
+  if (saved) document.getElementById('gen-apikey').value = saved;
+  const savedProv = localStorage.getItem('rf_provider');
+  if (savedProv) { currentProvider=savedProv; document.getElementById('prov-sel').value=savedProv; }
+}
+
+// ── DELETE ────────────────────────────────────────────────────
+async function deleteEmployee(id) {
+  if (!confirm('Remove this employee from the system?')) return;
+  await fetch('/api/employees/'+id, { method:'DELETE', headers:{'Authorization':'Bearer '+TOKEN()} });
+  selectedEmp = null;
+  document.getElementById('right-panel').innerHTML = `<div class="right-empty" id="right-empty"><div style="font-size:2.5rem">👥</div><div style="font-size:0.9rem;color:var(--text)">Select an employee</div><div>to view their profile and generate a resume</div></div>`;
+  loadEmployees(document.getElementById('search').value.trim());
+}
+
+// ── ADD EMPLOYEE ─────────────────────────────────────────────
+function openAddModal()  { document.getElementById('add-modal').style.display='flex'; document.getElementById('m-name').focus(); }
+function closeAddModal() { document.getElementById('add-modal').style.display='none'; ['m-name','m-user','m-email','m-pass'].forEach(id=>document.getElementById(id).value=''); document.getElementById('modal-err').style.display='none'; }
+
+async function doAddEmployee() {
+  const name=document.getElementById('m-name').value.trim(), username=document.getElementById('m-user').value.trim();
+  const email=document.getElementById('m-email').value.trim(), password=document.getElementById('m-pass').value;
+  if (!name||!username||!password) { const e=document.getElementById('modal-err'); e.textContent='Name, username and password required'; e.style.display='block'; return; }
+  const r = await fetch('/api/employees', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN()}, body:JSON.stringify({name,username,email,password}) });
+  const d = await r.json();
+  if (d.error) { const e=document.getElementById('modal-err'); e.textContent=d.error; e.style.display='block'; return; }
+  closeAddModal(); loadEmployees(document.getElementById('search').value.trim());
+}
+
+// ── GENERATE ─────────────────────────────────────────────────
+async function generateFor(id) {
+  const emp = allEmployees.find(e => e.id === id); if (!emp) return;
+  const apiKey = document.getElementById('gen-apikey').value.trim();
+  if (!apiKey) { alert('Please enter an API key to generate with AI.'); return; }
+  localStorage.setItem('rf_apikey', apiKey);
+  localStorage.setItem('rf_provider', currentProvider);
+
+  const p = emp.profile||{};
+  const jd = document.getElementById('gen-jd').value.trim();
+  const isTailored = jd.length > 50;
+
+  const tailorBlock = isTailored ? `
+═══ ATS TAILORING MISSION ═══
+T1. Extract EVERY keyword from the JD and embed each naturally in the resume.
+T2. Mirror the JD's exact phrasing — do not paraphrase.
+T3. Rewrite summary (3 sentences) using 4+ JD keywords directly.
+T4. Reorder bullets so the most JD-relevant achievement is first.
+T5. Add any JD-required skills the candidate plausibly has. Put JD skills first.
+T6. If more than 4 experience entries, select only the 4 most relevant.
+T7. DO NOT fabricate specifics — only reframe what exists.
+JOB DESCRIPTION:\n${jd}
+Append: "match":{"score":<0-100>,"matched":[],"missing":[],"role":""}` : '';
+
+  const prompt = `You are a world-class resume writer and ATS specialist.
+BASE RULES:
+1. Every bullet starts with a strong past-tense action verb.
+2. Bullet format: [Action verb] + [what] + [impact/result]. Specific and concrete.
+3. 3–5 bullets per experience. Infer from title/company if description is brief.
+4. Summary: 3 sentences — who they are, core strengths, value proposition.
+5. Group skills into: Languages, Frameworks & Libraries, Cloud & DevOps, Databases, Tools.
+6. NEVER use: passionate, dynamic, results-driven, synergy, team player.
+7. Bullets under 20 words.
+${tailorBlock}
+Return ONLY a raw JSON object.
+Schema: {"header":{"name":"","title":"","contact":""},"summary":"","experience":[{"title":"","company":"","location":"","duration":"","bullets":[]}],"skills":[{"category":"","items":[]}],"projects":[{"name":"","stack":"","bullets":[]}],"education":[{"degree":"","institution":"","year":"","details":""}]${isTailored?',"match":{"score":0,"matched":[],"missing":[],"role":""}':''}}
+RAW CANDIDATE DATA:
+${JSON.stringify({name:emp.name,email:emp.email,...p},null,2)}
+Generate now:`;
+
+  const btn = document.querySelector('.btn-gen'); btn.disabled=true; btn.textContent='⟳ Writing…';
+  document.getElementById('resume-output-area').innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted);font-size:0.78rem">Generating resume…</div>`;
+
+  try {
+    const r = await fetch('/api/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({provider:currentProvider,apiKey,prompt}) });
+    const {text,error} = await r.json();
+    if (error) throw new Error(error);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Unexpected AI response');
+    lastResume = JSON.parse(match[0]);
+    showResumeOutput(lastResume);
+  } catch(err) {
+    document.getElementById('resume-output-area').innerHTML = `<div style="padding:20px;color:#ff6666;font-size:0.76rem">✕ ${esc(err.message)}</div>`;
+  }
+  btn.disabled=false; btn.textContent='✦ Generate with AI';
+}
+
+function quickGenerateFor(id) {
+  const emp = allEmployees.find(e => e.id === id); if (!emp) return;
+  const p = emp.profile||{};
+  const contact = [p.email||emp.email, p.phone, p.location, p.links].filter(Boolean).join(' · ');
+  function descToBullets(desc) {
+    if (!desc?.trim()) return [];
+    const lines = desc.split('\n').map(l=>l.trim().replace(/^[-•*–]\s*/,'')).filter(Boolean);
+    if (lines.length>1) return lines;
+    const sents = desc.split(/\.\s+/).map(s=>s.trim()).filter(s=>s.length>8);
+    if (sents.length>1) return sents.map(s=>s.endsWith('.')?s:s+'.');
+    return [desc.trim()];
+  }
+  lastResume = {
+    header: { name: emp.name, title: p.title||'', contact },
+    summary: p.summary||'',
+    experience: (p.experience||[]).map(e=>({title:e.title||'',company:e.company||'',duration:e.duration||'',location:'',bullets:descToBullets(e.desc)})),
+    skills: (p.skills||[]).length ? [{ category:'Skills', items: p.skills }] : [],
+    projects: (p.projects||[]).map(pr=>({name:pr.name||'',stack:pr.stack||'',bullets:descToBullets(pr.desc)})),
+    education: (p.education||[]).map(e=>({degree:e.degree||'',institution:e.institution||'',year:e.year||'',details:''}))
+  };
+  showResumeOutput(lastResume);
+}
+
+function showResumeOutput(d) {
+  const html = renderResumeHTML(d);
+  document.getElementById('resume-output-area').innerHTML = `
+    <div class="resume-wrap">
+      <div class="resume-toolbar">
+        <div class="resume-toolbar-title">Generated Resume</div>
+        <div class="toolbar-btns">
+          <button class="t-btn" onclick="window.print()">⎙ Print / PDF</button>
+          <button class="t-btn" onclick="downloadDocx()">⬇ DOCX</button>
+        </div>
+      </div>
+      ${html}
+    </div>`;
+}
+
+function renderResumeHTML(d) {
+  let h = `<div class="resume-doc">`;
+  h += `<div class="r-name">${esc(d.header?.name||'')}</div>`;
+  if (d.header?.title) h += `<div class="r-title-line">${esc(d.header.title)}</div>`;
+  h += `<div class="r-contact">${esc(d.header?.contact||'')}</div><hr class="r-divider">`;
+  if (d.summary) h += `<div class="r-section"><div class="r-section-title">Professional Summary</div><p class="r-summary">${esc(d.summary)}</p></div>`;
+  if (d.experience?.length) {
+    h += `<div class="r-section"><div class="r-section-title">Work Experience</div>`;
+    d.experience.forEach(e => {
+      h += `<div class="r-entry"><div class="r-entry-header"><span class="r-entry-title">${esc(e.title)}</span><span class="r-entry-date">${esc(e.duration)}</span></div>`;
+      h += `<div class="r-entry-sub">${esc(e.company)}${e.location?' · '+esc(e.location):''}</div>`;
+      if (e.bullets?.length) h += `<ul class="r-bullets">${e.bullets.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`;
+      h += `</div>`;
+    });
+    h += `</div>`;
+  }
+  if (d.skills?.length) {
+    h += `<div class="r-section"><div class="r-section-title">Skills</div><div class="r-skills-grid">`;
+    d.skills.forEach(s => { if(s.category&&s.items?.length) h+=`<div class="r-skill-row"><span class="r-skill-cat">${esc(s.category)}:</span> ${esc(s.items.join(', '))}</div>`; });
+    h += `</div></div>`;
+  }
+  if (d.projects?.length) {
+    h += `<div class="r-section"><div class="r-section-title">Projects</div>`;
+    d.projects.forEach(p => {
+      h += `<div class="r-entry"><div class="r-entry-header"><span class="r-entry-title">${esc(p.name)}</span><span class="r-entry-date" style="font-style:italic">${esc(p.stack)}</span></div>`;
+      if (p.bullets?.length) h += `<ul class="r-bullets">${p.bullets.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`;
+      h += `</div>`;
+    });
+    h += `</div>`;
+  }
+  if (d.education?.length) {
+    h += `<div class="r-section"><div class="r-section-title">Education</div>`;
+    d.education.forEach(e => {
+      h += `<div class="r-entry"><div class="r-entry-header"><span class="r-entry-title">${esc(e.degree)}</span><span class="r-entry-date">${esc(e.year)}</span></div>`;
+      h += `<div class="r-entry-sub">${esc(e.institution)}</div></div>`;
+    });
+    h += `</div>`;
+  }
+  return h + `</div>`;
+}
+
+async function downloadDocx() {
+  if (!lastResume) return;
+  const r = await fetch('/api/export-docx', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({resume:lastResume}) });
+  if (!r.ok) { alert('Export failed'); return; }
+  const blob = await r.blob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = (lastResume.header?.name||'resume').replace(/\s+/g,'_').toLowerCase()+'_resume.docx';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+(async () => {
+  const ok = await checkAuth(); if (!ok) return;
+  await loadEmployees();
+})();
+</script>
+</body>
+</html>

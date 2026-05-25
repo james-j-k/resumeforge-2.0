@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResumeForge — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0d0d0d; --surface:#161616; --surface2:#1e1e1e; --border:#2a2a2a; --accent:#e8ff47; --text:#f0f0f0; --muted:#666; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:'DM Mono',monospace; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:40px; width:100%; max-width:400px; }
+.logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem; margin-bottom:6px; }
+.logo span { color:var(--accent); }
+.tagline { font-size:0.7rem; color:var(--muted); margin-bottom:28px; }
+.tabs { display:flex; border:1px solid var(--border); border-radius:7px; overflow:hidden; margin-bottom:26px; }
+.tab { flex:1; padding:9px; background:transparent; border:none; color:var(--muted); font-family:'DM Mono',monospace; font-size:0.75rem; cursor:pointer; transition:all 0.2s; }
+.tab.active { background:var(--accent); color:#000; font-weight:500; }
+label { display:block; font-size:0.63rem; color:var(--muted); margin-bottom:5px; margin-top:14px; text-transform:uppercase; letter-spacing:0.5px; }
+input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:'DM Mono',monospace; font-size:0.84rem; padding:10px 13px; outline:none; transition:border-color 0.2s; }
+input:focus { border-color:var(--accent); }
+.btn { width:100%; padding:13px; background:var(--accent); color:#000; font-family:'Syne',sans-serif; font-size:0.92rem; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-top:22px; transition:all 0.2s; letter-spacing:0.3px; }
+.btn:hover { background:#d4eb30; transform:translateY(-1px); }
+.btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.error { color:#ff6666; font-size:0.72rem; margin-top:12px; padding:9px 12px; background:rgba(255,68,68,0.07); border:1px solid rgba(255,68,68,0.2); border-radius:6px; display:none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Resume<span>Forge</span></div>
+  <div class="tagline">Internal Resume Management System</div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('login')">Login</button>
+    <button class="tab" onclick="showTab('register')">Register</button>
+  </div>
+
+  <div id="login-form">
+    <label>Username</label>
+    <input type="text" id="l-user" placeholder="your.username" autocomplete="username">
+    <label>Password</label>
+    <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn" id="login-btn" onclick="doLogin()">Login</button>
+  </div>
+
+  <div id="register-form" style="display:none">
+    <label>Full Name</label>
+    <input type="text" id="r-name" placeholder="e.g. Arjun Sharma">
+    <label>Username</label>
+    <input type="text" id="r-user" placeholder="arjun.sharma">
+    <label>Email</label>
+    <input type="email" id="r-email" placeholder="arjun@company.com">
+    <label>Password</label>
+    <input type="password" id="r-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()">
+    <button class="btn" id="register-btn" onclick="doRegister()">Create Account</button>
+  </div>
+
+  <div class="error" id="err"></div>
+</div>
+
+<script>
+function showTab(t) {
+  document.getElementById('login-form').style.display    = t==='login'    ? 'block' : 'none';
+  document.getElementById('register-form').style.display = t==='register' ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', i===(t==='login'?0:1)));
+  document.getElementById('err').style.display = 'none';
+}
+
+function showErr(msg) { const e=document.getElementById('err'); e.textContent=msg; e.style.display='block'; }
+
+async function doLogin() {
+  const username = document.getElementById('l-user').value.trim();
+  const password = document.getElementById('l-pass').value;
+  if (!username || !password) { showErr('Enter username and password'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled=true; btn.textContent='Logging in…';
+  try {
+    const r = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,password}) });
+    const d = await r.json();
+    if (d.error) { showErr(d.error); btn.disabled=false; btn.textContent='Login'; return; }
+    localStorage.setItem('rf_token', d.token);
+    localStorage.setItem('rf_user',  JSON.stringify(d.user));
+    window.location.href = d.user.role === 'manager' ? '/manager.html' : '/';
+  } catch(e) { showErr('Connection error'); btn.disabled=false; btn.textContent='Login'; }
+}
+
+async function doRegister() {
+  const name     = document.getElementById('r-name').value.trim();
+  const username = document.getElementById('r-user').value.trim();
+  const email    = document.getElementById('r-email').value.trim();
+  const password = document.getElementById('r-pass').value;
+  if (!name||!username||!password) { showErr('Name, username and password are required'); return; }
+  const btn = document.getElementById('register-btn');
+  btn.disabled=true; btn.textContent='Creating…';
+  try {
+    const r = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,username,email,password}) });
+    const d = await r.json();
+    if (d.error) { showErr(d.error); btn.disabled=false; btn.textContent='Create Account'; return; }
+    localStorage.setItem('rf_token', d.token);
+    localStorage.setItem('rf_user',  JSON.stringify(d.user));
+    window.location.href = '/';
+  } catch(e) { showErr('Connection error'); btn.disabled=false; btn.textContent='Create Account'; }
+}
+
+// Already logged in? Redirect.
+const _tok = localStorage.getItem('rf_token');
+const _usr = JSON.parse(localStorage.getItem('rf_user')||'{}');
+if (_tok && _usr.id) window.location.href = _usr.role === 'manager' ? '/manager.html' : '/';
+</script>
+</body>
+</html>
