@@ -249,7 +249,10 @@ input:focus, textarea:focus { border-color:var(--accent); }
 
 <header>
   <div class="logo">Resume<span>Forge</span></div>
-  <div style="font-size:0.65rem;color:var(--muted);letter-spacing:0.5px">⌘↵ to generate</div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div style="font-size:0.65rem;color:var(--muted);letter-spacing:0.5px">⌘↵ to generate</div>
+    <button id="forget-btn" onclick="forgetMe()" style="background:transparent;border:1px solid #ff444430;color:#ff6666;font-family:'DM Mono',monospace;font-size:0.65rem;padding:5px 11px;border-radius:5px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='#ff444415'" onmouseout="this.style.background='transparent'">✕ Forget Me</button>
+  </div>
 </header>
 
 <div class="app">
@@ -1055,6 +1058,31 @@ function copyCoverLetter() {
     btn.textContent='✓ Copied!';
     setTimeout(()=>{ btn.textContent='⎘ Copy Letter'; },2000);
   });
+}
+
+// ── FORGET ME ────────────────────────────────────────────────
+function forgetMe() {
+  if (!confirm('Delete all your saved data from this browser? This cannot be undone.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  // Reset state
+  state.experience=[]; state.skills=[]; state.projects=[]; state.education=[];
+  // Clear all inputs
+  ['name','title','location','email','phone','links','summary','apikey','job-desc'].forEach(id=>set(id,''));
+  currentProvider='anthropic';
+  selectProvider('anthropic');
+  renderList('exp'); renderList('proj'); renderList('edu'); renderSkills();
+  updateCompleteness(); updateTabBadges(); updateProfileBanner();
+  // Clear resume output
+  lastResume=null; coverLetterText='';
+  document.getElementById('resume-output').innerHTML=`<div class="resume-placeholder"><div style="font-size:2rem">✦</div><div>Fill in your details and hit<br><strong>Generate Resume</strong></div></div>`;
+  document.getElementById('match-badge').classList.remove('show');
+  ['copy-btn','pdf-btn','docx-btn'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  document.getElementById('tpl-switcher').classList.remove('show');
+  // Show confirmation
+  const btn=document.getElementById('forget-btn');
+  const prev=btn.textContent;
+  btn.textContent='✓ Cleared'; btn.style.color='var(--accent)'; btn.style.borderColor='var(--accent)';
+  setTimeout(()=>{ btn.textContent=prev; btn.style.color='#ff6666'; btn.style.borderColor='#ff444430'; },2500);
 }
 
 // ── COPY / DOCX ───────────────────────────────────────────────
