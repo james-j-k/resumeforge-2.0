@@ -68,9 +68,13 @@ input:focus, textarea:focus { border-color:var(--accent); }
 .btn-danger { background:transparent; color:#ff4444; border:1px solid #ff444430; font-size:0.68rem; padding:4px 9px; }
 .btn-danger:hover { background:#ff444415; }
 
-.btn-generate { width:100%; padding:15px; background:var(--accent); color:#000; font-family:'Syne',sans-serif; font-size:0.95rem; font-weight:700; border:none; border-radius:8px; cursor:pointer; transition:all 0.3s; margin-top:16px; letter-spacing:0.5px; display:flex; align-items:center; justify-content:center; gap:10px; }
+.btn-generate-wrap { display:flex; flex-direction:column; gap:8px; margin-top:16px; }
+.btn-generate { width:100%; padding:15px; background:var(--accent); color:#000; font-family:'Syne',sans-serif; font-size:0.95rem; font-weight:700; border:none; border-radius:8px; cursor:pointer; transition:all 0.3s; letter-spacing:0.5px; display:flex; align-items:center; justify-content:center; gap:10px; }
 .btn-generate:hover { background:#d4eb30; transform:translateY(-2px); box-shadow:0 8px 25px rgba(232,255,71,0.2); }
 .btn-generate:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.btn-quick { width:100%; padding:11px; background:transparent; color:var(--muted); font-family:'DM Mono',monospace; font-size:0.8rem; font-weight:500; border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+.btn-quick:hover { border-color:var(--text); color:var(--text); }
+.btn-quick:disabled { opacity:0.4; cursor:not-allowed; }
 .kbd-hint { font-size:0.6rem; opacity:0.45; font-weight:400; font-family:'DM Mono',monospace; letter-spacing:0; }
 
 /* ── UPLOAD ZONE ── */
@@ -427,10 +431,15 @@ input:focus, textarea:focus { border-color:var(--accent); }
       </div>
     </div>
 
-    <button class="btn-generate" onclick="generateResume()" id="gen-btn">
-      <span id="gen-btn-text">✦ Generate Resume with AI</span>
-      <span class="kbd-hint">⌘↵</span>
-    </button>
+    <div class="btn-generate-wrap">
+      <button class="btn-generate" onclick="generateResume()" id="gen-btn">
+        <span id="gen-btn-text">✦ Generate Resume with AI</span>
+        <span class="kbd-hint">⌘↵</span>
+      </button>
+      <button class="btn-quick" onclick="generateResumeLocal()" id="quick-btn">
+        ⚡ Quick Generate <span style="font-size:0.68rem;opacity:0.55">— no API key needed</span>
+      </button>
+    </div>
   </div>
 
   <!-- ════ RIGHT PANEL ════ -->
@@ -834,6 +843,62 @@ Generate the JSON now:`;
   }
   btn.disabled=false;
   document.getElementById('gen-btn-text').textContent = v('job-desc').trim().length>50 ? '🎯 Generate Tailored Resume' : '✦ Generate Resume with AI';
+}
+
+// ── QUICK GENERATE (no API key) ──────────────────────────────
+function descToBullets(desc) {
+  if (!desc || !desc.trim()) return [];
+  const lines = desc.split('\n').map(l => l.trim().replace(/^[-•*–]\s*/,'')).filter(Boolean);
+  if (lines.length > 1) return lines;
+  const sentences = desc.split(/\.\s+/).map(s => s.trim()).filter(s => s.length > 8);
+  if (sentences.length > 1) return sentences.map(s => s.endsWith('.')?s:s+'.');
+  return [desc.trim()];
+}
+
+function generateResumeLocal() {
+  const name = v('name');
+  if (!name) { alert('Please enter your name in the Basics tab.'); return; }
+
+  const btn = document.getElementById('quick-btn');
+  btn.disabled = true; btn.textContent = '⟳ Building…';
+
+  const contact = [v('email'),v('phone'),v('location'),v('links')].filter(Boolean).join(' · ');
+
+  // Group skills into categories of ~6 each if there are many, else one group
+  let skillGroups = [];
+  if (state.skills.length) {
+    const chunkSize = 8;
+    for (let i = 0; i < state.skills.length; i += chunkSize) {
+      skillGroups.push({ category: i === 0 ? 'Skills' : 'Additional Skills', items: state.skills.slice(i, i + chunkSize) });
+    }
+  }
+
+  const resumeData = {
+    header: { name, title: v('title'), contact },
+    summary: v('summary'),
+    experience: state.experience.map(e => ({
+      title: e.title||'', company: e.company||'', duration: e.duration||'', location: '',
+      bullets: descToBullets(e.desc)
+    })),
+    skills: skillGroups,
+    projects: state.projects.map(p => ({
+      name: p.name||'', stack: p.stack||'',
+      bullets: descToBullets(p.desc)
+    })),
+    education: state.education.map(e => ({
+      degree: e.degree||'', institution: e.institution||'', year: e.year||'', details: ''
+    }))
+  };
+
+  lastResume = resumeData;
+  document.getElementById('match-badge').classList.remove('show');
+  document.getElementById('resume-output').innerHTML = renderResumeHTML(resumeData);
+  ['copy-btn','pdf-btn','docx-btn'].forEach(id => document.getElementById(id).classList.add('show'));
+  document.getElementById('tpl-switcher').classList.add('show');
+  switchRightTab('resume');
+
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Quick Generate <span style="font-size:0.68rem;opacity:0.55">— no API key needed</span>';
 }
 
 // ── RENDER HTML RESUME ───────────────────────────────────────
