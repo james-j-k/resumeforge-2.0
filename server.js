@@ -16,10 +16,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const upload     = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 const JWT_SECRET = process.env.JWT_SECRET || 'resumeforge-dev-secret';
-const DB_PATH    = path.join(__dirname, 'db.json');
+const DATA_DIR   = process.env.DATA_DIR || path.join(__dirname, 'data');
+const DB_PATH    = path.join(DATA_DIR, 'db.json');
 
 // ── DATABASE ──────────────────────────────────────────────────
 function loadDB() {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(DB_PATH)) fs.writeFileSync(DB_PATH, JSON.stringify({ users: [] }, null, 2));
   return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
 }

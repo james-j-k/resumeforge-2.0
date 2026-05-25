@@ -1,5 +1,6 @@
 node_modules/
 server.log
 db.json
+data/
 .env
 *.env
